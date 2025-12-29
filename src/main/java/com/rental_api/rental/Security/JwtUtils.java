@@ -2,24 +2,40 @@ package com.rental_api.rental.Security;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Date;
-import java.util.List;
 
 @Component
 public class JwtUtils {
 
-    private final String jwtSecret = "mySecretKey12345"; // change to env variable in production
-    private final long jwtExpirationMs = 86400000; // 1 day
+    @Value("${SPRING_JWT_SECRET}")
+    private String secretKey;
 
-    public String generateJwtToken(String username, List<String> roles) {
+    @Value("${SPRING_JWT_EXPIRE}")
+    private String jwtExpiration; // e.g., "7d"
+
+    public String generateToken(String username) {
+        long expireMillis = 604800000L; // default 7 days
         return Jwts.builder()
                 .setSubject(username)
-                .claim("roles", roles)
                 .setIssuedAt(new Date())
-                .setExpiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .setExpiration(new Date(System.currentTimeMillis() + expireMillis))
+                .signWith(SignatureAlgorithm.HS512, secretKey)
                 .compact();
+    }
+
+    public String extractUsername(String token) {
+        return Jwts.parser()
+                   .setSigningKey(secretKey)
+                   .parseClaimsJws(token)
+                   .getBody()
+                   .getSubject();
+    }
+
+    public boolean validateToken(String token, String username) {
+        return extractUsername(token).equals(username);
     }
 }

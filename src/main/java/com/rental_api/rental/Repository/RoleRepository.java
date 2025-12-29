@@ -1,6 +1,6 @@
 package com.rental_api.rental.Repository;
 
-import com.rental_api.rental.Enitity.Role;
+import com.rental_api.rental.Entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
