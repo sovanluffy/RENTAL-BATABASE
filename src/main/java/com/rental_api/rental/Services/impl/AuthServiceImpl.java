@@ -83,7 +83,7 @@ public RegisterResponse register(RegisterRequest request) {
 
     userRepository.save(user);
 
-    // ===== ROLE ASSIGNMENT =====
+    // ===== ROLES ASSIGNMENT =====
     Role role;
     if (request.getRoleId() != null) {
         role = roleRepository.findById(request.getRoleId())
