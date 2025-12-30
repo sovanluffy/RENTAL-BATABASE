@@ -2,7 +2,7 @@ package com.rental_api.rental.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-
+//Comment
 @Entity
 @Table(name = "roles")
 @Getter
