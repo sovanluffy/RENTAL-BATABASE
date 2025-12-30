@@ -1,22 +1,25 @@
 package com.rental_api.rental.Dtos.Response;
 
+
+
 import lombok.AllArgsConstructor;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-import java.util.List;
-
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
+public class RegisterResponse {
+
+    private String message;
     private Long id;
-    private String username;
     private String email;
     private String firstName;
     private String lastName;
-    private List<String> roles;
-    private String token;
+    private String phone;
+    private String username;
+    private String roles;
+  
+
+    
 }

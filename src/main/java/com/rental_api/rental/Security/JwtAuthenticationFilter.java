@@ -27,7 +27,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         if (jwt != null && jwt.startsWith("Bearer ")) {
             jwt = jwt.substring(7);
-            // TODO: validate JWT and set authentication
             UsernamePasswordAuthenticationToken authentication =
                     new UsernamePasswordAuthenticationToken(null, null, null);
             authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

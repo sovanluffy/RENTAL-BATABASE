@@ -1,6 +1,5 @@
 package com.rental_api.rental.config;
 
-import com.rental_api.rental.Security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,7 +21,8 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/auth/**").permitAll() // allow login/register
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/register").permitAll() // allow login/register
                 .anyRequest().authenticated(); // secure other endpoints
 
         return http.build();
