@@ -12,11 +12,12 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class LoginResponse {
+    private String token;
     private Long id;
     private String username;
     private String email;
     private String firstName;
     private String lastName;
     private List<String> roles;
-    private String token;
 }
+

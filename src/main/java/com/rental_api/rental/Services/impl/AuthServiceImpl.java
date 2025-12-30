@@ -42,23 +42,43 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new Exception("User not found"));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+    public LoginResponse login(LoginRequest loginRequest) throws Exception {
+        // Try to find user by username first, then email
+        User user = null;
+
+        if (loginRequest.getUsername() != null && !loginRequest.getUsername().isEmpty()) {
+            user = userRepository.findByUsername(loginRequest.getUsername()).orElse(null);
+        }
+
+        if (user == null && loginRequest.getEmail() != null && !loginRequest.getEmail().isEmpty()) {
+            user = userRepository.findByEmail(loginRequest.getEmail()).orElse(null);
+        }
+
+        if (user == null) {
+            throw new Exception("User not found");
+        }
+
+        // Check password
+        if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new Exception("Invalid password");
         }
 
+        // Generate JWT token
         String token = jwtUtils.generateToken(user.getUsername());
 
+        // Return LoginResponse
         return new LoginResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getRoles()
-                        .stream()
-                        .map(r -> r.getRole().getName())
-                        .collect(Collectors.toList()),
-                token
-        );
+    token,  // <-- comma added
+    user.getId(),
+    user.getUsername(),
+    user.getEmail(),
+    user.getFirstName(),
+    user.getLastName(),
+    user.getRoles().stream()
+            .map(r -> r.getRole().getName())
+            .collect(Collectors.toList())  // <-- removed trailing comma
+);
+
     }
 
     // ================= REGISTER =================
