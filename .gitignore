@@ -1,10 +1,30 @@
+####################################
+# Maven
+####################################
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+####################################
+# Environment Variables (IMPORTANT)
+####################################
+.env
+.env.*
+!.env.example
+
+####################################
+# Spring Boot Config
+####################################
+application-local.yml
+application-dev.yml
+application-prod.yml
+!application.yml
+
+####################################
+# STS (Spring Tool Suite)
+####################################
 .apt_generated
 .classpath
 .factorypath
@@ -13,13 +33,17 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
+####################################
+# IntelliJ IDEA
+####################################
 .idea
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+####################################
+# NetBeans
+####################################
 /nbproject/private/
 /nbbuild/
 /dist/
@@ -29,5 +53,23 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### VS Code ###
+####################################
+# VS Code
+####################################
 .vscode/
+
+####################################
+# OS Files
+####################################
+.DS_Store
+Thumbs.db
+
+####################################
+# Logs
+####################################
+*.log
+
+####################################
+# Docker
+####################################
+docker-compose.override.yml
