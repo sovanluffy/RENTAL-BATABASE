@@ -6,7 +6,6 @@ import com.rental_api.rental.Dtos.Response.LoginResponse;
 import com.rental_api.rental.Dtos.Response.RegisterResponse;
 
 public interface AuthService {
-    LoginResponse login(LoginRequest loginRequest) throws Exception;
-    RegisterResponse register (RegisterRequest registerRequest) throws Exception;
-};
-
+    LoginResponse login(LoginRequest request);
+    RegisterResponse register(RegisterRequest request);
+}

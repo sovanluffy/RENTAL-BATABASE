@@ -1,25 +1,16 @@
 package com.rental_api.rental.Dtos.Response;
 
-
-
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 public class RegisterResponse {
-
-    private String message;
     private Long id;
+    private String username;
     private String email;
     private String firstName;
     private String lastName;
     private String phone;
-    private String username;
-    private String roles;
-  
-
-    
+    private String roles; // Comma-separated
+    private String message;
+    private String token; // add this
 }
