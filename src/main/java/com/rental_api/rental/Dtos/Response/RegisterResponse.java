@@ -12,5 +12,4 @@ public class RegisterResponse {
     private String phone;
     private String roles; // Comma-separated
     private String message;
-    private String token; // add this
 }
