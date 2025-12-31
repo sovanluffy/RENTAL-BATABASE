@@ -32,87 +32,92 @@ public class AuthServiceImpl implements AuthService {
 
     // ================= LOGIN =================
     @Override
-    public LoginResponse login(LoginRequest request) throws Exception {
+    public LoginResponse login(LoginRequest request) {
 
-        User user = userRepository
-                .findByUsernameOrEmail(
-                        request.getUsernameOrEmail(),
-                        request.getUsernameOrEmail()
-                )
-                .orElseThrow(() -> new Exception("User not found"));
+        User user;
+
+        if (request.getUsername() != null && !request.getUsername().isEmpty()) {
+            user = userRepository.findByUsername(request.getUsername())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } else if (request.getEmail() != null && !request.getEmail().isEmpty()) {
+            user = userRepository.findByEmail(request.getEmail())
+                    .orElseThrow(() -> new RuntimeException("User not found"));
+        } else {
+            throw new RuntimeException("Username or Email is required");
+        }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
-            throw new Exception("Invalid password");
+            throw new RuntimeException("Invalid password");
         }
 
         String token = jwtUtils.generateToken(user.getUsername());
 
-        return new LoginResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getFirstName(),
-                user.getLastName(),
-                user.getRoles()
-                        .stream()
-                        .map(r -> r.getRole().getName())
-                        .collect(Collectors.toList()),
-                token
-        );
+
+return new LoginResponse(
+        token, 
+        user.getId(),         // id              
+        user.getUsername(),
+        user.getEmail(),
+        user.getFirstName(),
+        user.getLastName(),
+        user.getRoles()
+                .stream()
+                .map(r -> r.getRole().getName())
+                .collect(Collectors.toList())
+);
+
     }
 
     // ================= REGISTER =================
     @Override
-public RegisterResponse register(RegisterRequest request) {
+    public RegisterResponse register(RegisterRequest request) {
 
-    // Check if user already exists
-    if (userRepository.existsByUsernameOrEmail(
-            request.getUsername(),
-            request.getEmail())) {
-        throw new RuntimeException("User already exists");
+        if (userRepository.existsByUsernameOrEmail(
+                request.getUsername(),
+                request.getEmail())) {
+            throw new RuntimeException("User already exists");
+        }
+
+        // Create User
+        User user = new User();
+        user.setFirstName(request.getFirst_name());
+        user.setLastName(request.getLast_name());
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setPhone(request.getPhone());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        userRepository.save(user);
+
+        // ===== ROLE ASSIGNMENT =====
+        Role role;
+        if (request.getRoleId() != null) {
+            role = roleRepository.findById(request.getRoleId())
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+        } else {
+            role = roleRepository.findByName("USER")
+                    .orElseThrow(() -> new RuntimeException("Default USER role not found"));
+        }
+
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        userRoleRepository.save(userRole);
+
+        // ===== RESPONSE =====
+        String timestamp = LocalDateTime.now()
+                .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+
+        RegisterResponse response = new RegisterResponse();
+        response.setId(user.getId());
+        response.setUsername(user.getUsername());
+        response.setEmail(user.getEmail());
+        response.setFirstName(user.getFirstName());
+        response.setLastName(user.getLastName());
+        response.setPhone(user.getPhone());
+        response.setRoles(role.getName());
+        response.setMessage(user.getUsername() + " registered successfully at " + timestamp);
+
+        return response;
     }
-
-    // Create User
-    User user = new User();
-    user.setFirstName(request.getFirst_name());
-    user.setLastName(request.getLast_name()); 
-    user.setUsername(request.getUsername());
-    user.setEmail(request.getEmail());
-    user.setPhone(request.getPhone()); 
-    user.setPassword(passwordEncoder.encode(request.getPassword()));
-
-    userRepository.save(user);
-
-    // ===== ROLES ASSIGNMENT =====
-    Role role;
-    if (request.getRoleId() != null) {
-        role = roleRepository.findById(request.getRoleId())
-                .orElseThrow(() -> new RuntimeException("Role not found"));
-    } else {
-        role = roleRepository.findByName("USER")
-                .orElseThrow(() -> new RuntimeException("Default USER role not found"));
-    }
-
-    // Save UserRole
-    UserRole userRole = new UserRole();
-    userRole.setUser(user);
-    userRole.setRole(role);
-    userRoleRepository.save(userRole);
-
-    // ===== Build Response =====
-    String timestamp = LocalDateTime.now()
-            .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-
-    RegisterResponse response = new RegisterResponse();
-    response.setId(user.getId());
-    response.setUsername(user.getUsername());
-    response.setEmail(user.getEmail());
-    response.setFirstName(user.getFirstName());
-    response.setLastName(user.getLastName());
-    response.setPhone(user.getPhone()); // keep actual phone
-    response.setRoles(role.getName()); // set role properly
-    response.setMessage(user.getUsername() + " registered successfully at " + timestamp);
-
-    return response;
-}
 }
