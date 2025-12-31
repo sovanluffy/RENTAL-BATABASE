@@ -9,3 +9,4 @@ public interface AuthService {
     LoginResponse login(LoginRequest loginRequest) throws Exception;
     RegisterResponse register (RegisterRequest registerRequest) throws Exception;
 };
+
