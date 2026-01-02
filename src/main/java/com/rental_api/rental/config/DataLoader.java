@@ -15,14 +15,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataLoader {
 
     @Bean
-    CommandLineRunner addNewUser(
+    CommandLineRunner addDefaultUser(
             UserRepository userRepository,
             RoleRepository roleRepository,
             UserRoleRepository userRoleRepository,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
-            // Ensure USER role exists12
+            // Ensure USER role exists
             Role userRole = roleRepository.findByName("USER")
                     .orElseGet(() -> {
                         Role role = new Role();
@@ -30,8 +30,9 @@ public class DataLoader {
                         return roleRepository.save(role);
                     });
 
-            // Add new user "reach" if not exists
+            // Check if default user exists by username or email
             if (userRepository.findByUsernameOrEmail("reach", "reach@example.com").isEmpty()) {
+                // Create default user
                 User reachUser = new User();
                 reachUser.setUsername("reach");
                 reachUser.setEmail("reach@example.com");
@@ -40,13 +41,13 @@ public class DataLoader {
                 reachUser.setPassword(passwordEncoder.encode("password123"));
                 userRepository.save(reachUser);
 
-                // Assign USER role
+                // Assign USER role to the user
                 UserRole ur = new UserRole();
                 ur.setUser(reachUser);
                 ur.setRole(userRole);
                 userRoleRepository.save(ur);
 
-                System.out.println("New user created: reach / password123 with role USER");
+                System.out.println("Default user created: reach / password123 with role USER");
             }
         };
     }

@@ -1,19 +1,13 @@
 version: "3.9"
 
 services:
-  app:
+  rental:
     build: .
-    container_name: rental
-    restart: unless-stopped
+    container_name: rental_app
     env_file:
       - .env
     ports:
-      - "${APP_PORT}:8080"
-    environment:
-      SPRING_PROFILES_ACTIVE: docker
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=${DB_SSLMODE}&channelBinding=${DB_CHANNEL_BINDING}
-      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}
-      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      SERVER_PORT: 8080
+      - "${APP_PORT}:${APP_PORT}"
     volumes:
       - ./uploads:/app/uploads
+    restart: unless-stopped
