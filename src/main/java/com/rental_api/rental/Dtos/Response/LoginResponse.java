@@ -20,4 +20,3 @@ public class LoginResponse {
     private String lastName;
     private List<String> roles;
 }
-
