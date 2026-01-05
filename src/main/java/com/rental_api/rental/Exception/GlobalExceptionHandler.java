@@ -1,7 +1,6 @@
 package com.rental_api.rental.Exception;
 
 import com.rental_api.rental.Dtos.Response.ApiResponse;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -10,20 +9,32 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleUserNotFound(UserNotFoundException ex) {
-        ApiResponse<Object> body = ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ApiResponse<Object>> userNotFound(UserNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(ApiResponse.error(404, "Not Found", ex.getMessage()));
     }
 
     @ExceptionHandler(RoleNotFoundException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRoleNotFound(RoleNotFoundException ex) {
-        ApiResponse<Object> body = ApiResponse.error(HttpStatus.NOT_FOUND.value(), "Not Found", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ApiResponse<Object>> roleNotFound(RoleNotFoundException ex) {
+        return ResponseEntity.status(404)
+                .body(ApiResponse.error(404, "Not Found", ex.getMessage()));
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ApiResponse<Object>> unauthorized(UnauthorizedException ex) {
+        return ResponseEntity.status(401)
+                .body(ApiResponse.error(401, "Unauthorized", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ApiResponse<Object>> conflict(ConflictException ex) {
+        return ResponseEntity.status(409)
+                .body(ApiResponse.error(409, "Conflict", ex.getMessage()));
     }
 
     @ExceptionHandler(RuntimeException.class)
-    public ResponseEntity<ApiResponse<Object>> handleRuntime(RuntimeException ex) {
-        ApiResponse<Object> body = ApiResponse.error(HttpStatus.BAD_REQUEST.value(), "Bad Request", ex.getMessage());
-        return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ApiResponse<Object>> badRequest(RuntimeException ex) {
+        return ResponseEntity.status(400)
+                .body(ApiResponse.error(400, "Bad Request", ex.getMessage()));
     }
 }
