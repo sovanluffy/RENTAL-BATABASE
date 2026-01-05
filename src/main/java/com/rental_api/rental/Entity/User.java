@@ -9,6 +9,8 @@ import lombok.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 @Entity
 @Table(
     name = "users",
@@ -43,10 +45,10 @@ public class User {
     @Column(nullable = false)
     private String password;
 
-    @Column(length = 50)
+   @JsonProperty("first_name")
     private String firstName;
 
-    @Column(length = 50)
+    @JsonProperty("last_name")
     private String lastName;
 
     @Column(length = 20)

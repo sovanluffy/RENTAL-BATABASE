@@ -23,6 +23,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/register").permitAll() // allow login/register
+                 .requestMatchers("/api/properties").hasAnyRole("ADMIN", "AGENT") // allow properties endpoint for ADMIN and AGENT
                 .anyRequest().authenticated(); // secure other endpoints
 
         return http.build();
