@@ -34,17 +34,15 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
+    // ================= REGISTER =================
     @Override
     public RegisterResponse register(RegisterRequest request) {
-        // Validate input
         Validation.validateRegister(request);
 
-        // Check username/email
         if (userRepository.existsByUsernameOrEmail(request.getUsername(), request.getEmail())) {
             throw new ConflictException("Username or email already exists");
         }
 
-        // Create user
         User user = new User();
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
@@ -55,19 +53,16 @@ public class AuthServiceImpl implements AuthService {
         user.setRoles(new ArrayList<>());
         userRepository.save(user);
 
-        // Assign USER role
         Role userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RoleNotFoundException("USER role not found"));
         assignRole(user, userRole);
 
-        // Assign AGENT role if checked
         if (request.isAgent()) {
             Role agentRole = roleRepository.findByName("AGENT")
                     .orElseThrow(() -> new RoleNotFoundException("AGENT role not found"));
             assignRole(user, agentRole);
         }
 
-        // Collect roles as list of strings
         List<String> roles = user.getRoles().stream()
                 .map(UserRole::getRole)
                 .map(Role::getName)
@@ -84,33 +79,35 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
+    // ================= LOGIN =================
     @Override
     public LoginResponse login(LoginRequest request) {
-        // Validate input
         Validation.validateLogin(request);
-
-        // Find user
         User user = findUser(request);
 
-        // Check password
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new UnauthorizedException("Invalid username/email or password");
         }
 
-        // Generate JWT
-        String token = jwtUtils.generateToken(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                null,
-                null
-        );
-
-        // Collect roles
+        // Get roles & IDs
         List<String> roles = user.getRoles().stream()
                 .map(UserRole::getRole)
                 .map(Role::getName)
                 .collect(Collectors.toList());
+
+        List<Long> roleIds = user.getRoles().stream()
+                .map(UserRole::getRole)
+                .map(Role::getId)
+                .collect(Collectors.toList());
+
+        // Generate token including roles & roleIds
+        String token = jwtUtils.generateToken(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                roles,
+                roleIds
+        );
 
         return new LoginResponse(
                 token,
@@ -123,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
         );
     }
 
-    // ---------------- HELPER METHODS ----------------
+    // ================= HELPER METHODS =================
     private User findUser(LoginRequest request) {
         if (request.getUsername() != null && !request.getUsername().isBlank()) {
             return userRepository.findByUsername(request.getUsername())
@@ -137,10 +134,10 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private void assignRole(User user, Role role) {
-        UserRole ur = new UserRole();
-        ur.setUser(user);
-        ur.setRole(role);
-        user.getRoles().add(ur);
-        userRoleRepository.save(ur);
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        user.getRoles().add(userRole);
+        userRoleRepository.save(userRole);
     }
 }

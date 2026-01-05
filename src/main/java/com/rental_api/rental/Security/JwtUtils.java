@@ -36,8 +36,8 @@ public class JwtUtils {
         Claims claims = Jwts.claims().setSubject(username);
         claims.put("userId", userId);
         claims.put("email", email);
-        claims.put("roles", roles);
-        claims.put("roleIds", roleIds);
+        claims.put("roles", roles);       // include roles
+        claims.put("roleIds", roleIds);   // include role IDs
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -83,7 +83,7 @@ public class JwtUtils {
                     .map(o -> (String) o)
                     .collect(Collectors.toList());
         }
-        return List.of(); // empty list if missing or invalid
+        return List.of();
     }
 
     public List<Long> extractRoleIds(String token) {
@@ -94,7 +94,7 @@ public class JwtUtils {
                     .map(o -> ((Number) o).longValue())
                     .collect(Collectors.toList());
         }
-        return List.of(); // empty list if missing or invalid
+        return List.of();
     }
 
     // ================= VALIDATE TOKEN =================
