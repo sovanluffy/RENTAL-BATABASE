@@ -1,12 +1,18 @@
 package com.rental_api.rental.Entity;
 
-import java.time.LocalDateTime;
 import jakarta.persistence.*;
-import lombok.Data;
+import lombok.*;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name = "properties")
-@Data
+@Table(name = "property")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@ToString
 public class Property {
 
     @Id
@@ -16,21 +22,23 @@ public class Property {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
+    @Column(length = 2000)
     private String description;
 
     @Column(nullable = false)
     private String address;
 
     @Column(nullable = false)
-    private Float price;
+    private Double price;
 
-    // Agent who created the property
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "agent_id", nullable = false)
     private User agent;
 
-    @Column(name = "created_at", updatable = false)
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Review> reviews = new ArrayList<>();
+
+    @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
