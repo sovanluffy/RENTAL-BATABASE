@@ -10,7 +10,7 @@ public class PropertyResponse {
     private String title;
     private String description;
     private String address;
-    private Float price;
+    private Double price;
     private Long userId;
     private String username;
     private LocalDateTime createdAt;
