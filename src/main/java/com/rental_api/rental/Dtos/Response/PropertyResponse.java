@@ -1,16 +1,9 @@
 package com.rental_api.rental.Dtos.Response;
 
 import java.time.LocalDateTime;
-
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
 public class PropertyResponse {
 
     private Long id;
@@ -18,8 +11,8 @@ public class PropertyResponse {
     private String description;
     private String address;
     private Float price;
-    private String agentName;
+    private Long userId;
+    private String username;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    
 }
