@@ -26,4 +26,16 @@ public class PropertyController {
         return ResponseEntity.status(201)
                 .body(ApiResponse.success(201, "Property created successfully", res));
     }
+
+
+    // ================= UPDATE PROPERTY =================
+     @PutMapping("/{id}")
+    public ResponseEntity<PropertyResponse> updateProperty(
+            @PathVariable Long id,
+            @RequestBody PropertyRequest request,
+            Authentication auth
+    ) {
+        PropertyResponse response = propertyService.updateProperty(id, request, auth);
+        return ResponseEntity.ok(response);
+    }
 }
