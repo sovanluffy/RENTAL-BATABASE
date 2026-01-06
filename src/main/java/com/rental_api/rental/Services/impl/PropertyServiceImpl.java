@@ -1,8 +1,5 @@
 package com.rental_api.rental.Services.impl;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.stereotype.Service;
-import lombok.RequiredArgsConstructor;
 import com.rental_api.rental.Dtos.Request.PropertyRequest;
 import com.rental_api.rental.Dtos.Response.PropertyResponse;
 import com.rental_api.rental.Entity.Property;
@@ -12,6 +9,9 @@ import com.rental_api.rental.Exception.UserNotFoundException;
 import com.rental_api.rental.Repository.PropertyRepository;
 import com.rental_api.rental.Repository.UserRepository;
 import com.rental_api.rental.Services.PropertyService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
@@ -22,21 +22,26 @@ public class PropertyServiceImpl implements PropertyService {
 
     @Override
     public PropertyResponse createProperty(PropertyRequest request, Authentication auth) {
+
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // Only AGENT or ADMIN
         boolean allowed = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
-        if (!allowed)
+                .anyMatch(a ->
+                        a.getAuthority().equals("ROLE_AGENT") ||
+                        a.getAuthority().equals("ROLE_ADMIN")
+                );
+
+        if (!allowed) {
             throw new UnauthorizedException("Only AGENT or ADMIN can create properties");
+        }
 
         Property property = new Property();
         property.setTitle(request.getTitle());
         property.setDescription(request.getDescription());
         property.setAddress(request.getAddress());
         property.setPrice(request.getPrice());
-        property.setAgent(user);  // map to agent_id
+        property.setAgent(user);
 
         propertyRepository.save(property);
 

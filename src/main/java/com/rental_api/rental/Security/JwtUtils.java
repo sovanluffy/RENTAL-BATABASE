@@ -5,7 +5,6 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Getter;
 import lombok.Setter;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-@Slf4j
 @Getter
 @Setter
 public class JwtUtils {
@@ -23,7 +21,7 @@ public class JwtUtils {
     private String secretKey;
 
     @Value("${SPRING_JWT_EXPIRE}")
-    private long jwtExpirationMs; // e.g., 604800000 = 7 days
+    private long jwtExpirationMs;
 
     // ================= GENERATE TOKEN =================
     public String generateToken(
@@ -36,8 +34,8 @@ public class JwtUtils {
         Claims claims = Jwts.claims().setSubject(username);
         claims.put("userId", userId);
         claims.put("email", email);
-        claims.put("roles", roles);       // include roles
-        claims.put("roleIds", roleIds);   // include role IDs
+        claims.put("roles", roles);
+        claims.put("roleIds", roleIds);
 
         return Jwts.builder()
                 .setClaims(claims)
@@ -47,7 +45,7 @@ public class JwtUtils {
                 .compact();
     }
 
-    // ================= EXTRACT CLAIMS =================
+    // ================= PARSE TOKEN =================
     private Claims getClaims(String token) {
         return Jwts.parser()
                 .setSigningKey(secretKey)
@@ -60,49 +58,39 @@ public class JwtUtils {
     }
 
     public Long extractUserId(String token) {
-        Object userIdObj = getClaims(token).get("userId");
-        if (userIdObj instanceof Number) {
-            return ((Number) userIdObj).longValue();
-        }
-        return null;
+        Object obj = getClaims(token).get("userId");
+        return obj instanceof Number ? ((Number) obj).longValue() : null;
     }
 
     public String extractEmail(String token) {
-        Object emailObj = getClaims(token).get("email");
-        if (emailObj instanceof String) {
-            return (String) emailObj;
-        }
-        return null;
+        Object obj = getClaims(token).get("email");
+        return obj instanceof String ? (String) obj : null;
     }
 
     public List<String> extractRoles(String token) {
-        Object rolesObj = getClaims(token).get("roles");
-        if (rolesObj instanceof List<?>) {
-            return ((List<?>) rolesObj).stream()
-                    .filter(o -> o instanceof String)
-                    .map(o -> (String) o)
+        Object obj = getClaims(token).get("roles");
+        if (obj instanceof List<?>) {
+            return ((List<?>) obj).stream()
+                    .filter(String.class::isInstance)
+                    .map(String.class::cast)
                     .collect(Collectors.toList());
         }
         return List.of();
     }
 
     public List<Long> extractRoleIds(String token) {
-        Object roleIdsObj = getClaims(token).get("roleIds");
-        if (roleIdsObj instanceof List<?>) {
-            return ((List<?>) roleIdsObj).stream()
-                    .filter(o -> o instanceof Number)
+        Object obj = getClaims(token).get("roleIds");
+        if (obj instanceof List<?>) {
+            return ((List<?>) obj).stream()
+                    .filter(Number.class::isInstance)
                     .map(o -> ((Number) o).longValue())
                     .collect(Collectors.toList());
         }
         return List.of();
     }
 
-    // ================= VALIDATE TOKEN =================
-    public boolean validateToken(String token, String username) {
-        return extractUsername(token).equals(username) && !isTokenExpired(token);
-    }
-
-    private boolean isTokenExpired(String token) {
-        return getClaims(token).getExpiration().before(new Date());
+    // ================= VALIDATE =================
+    public boolean validateToken(String token) {
+        return !getClaims(token).getExpiration().before(new Date());
     }
 }
