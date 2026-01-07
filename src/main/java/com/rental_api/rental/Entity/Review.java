@@ -1,16 +1,20 @@
 package com.rental_api.rental.Entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "review")
+@Table(name = "review", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"user_id", "property_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = "property")
 public class Review {
 
     @Id
@@ -23,6 +27,7 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "property_id", nullable = false)
+    @JsonBackReference
     private Property property;
 
     @Column(nullable = false)

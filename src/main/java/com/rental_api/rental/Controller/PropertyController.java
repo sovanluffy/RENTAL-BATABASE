@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/properties")
 @RequiredArgsConstructor
@@ -25,5 +27,19 @@ public class PropertyController {
         PropertyResponse res = propertyService.createProperty(request, auth);
         return ResponseEntity.status(201)
                 .body(ApiResponse.success(201, "Property created successfully", res));
+    }
+
+    // ================= GET ALL PROPERTIES =================
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PropertyResponse>>> getAllProperties() {
+        List<PropertyResponse> list = propertyService.getAllProperties();
+        return ResponseEntity.ok(ApiResponse.success(200, "All properties fetched", list));
+    }
+
+    // ================= GET PROPERTY BY ID =================
+    @GetMapping("/{id}")
+    public ResponseEntity<ApiResponse<PropertyResponse>> getPropertyById(@PathVariable Long id) {
+        PropertyResponse res = propertyService.getPropertyById(id);
+        return ResponseEntity.ok(ApiResponse.success(200, "Property fetched successfully", res));
     }
 }

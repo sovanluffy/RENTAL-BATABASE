@@ -1,7 +1,9 @@
 package com.rental_api.rental.Entity;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +14,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString
+@ToString(exclude = "reviews")
 public class Property {
 
     @Id
@@ -36,6 +38,7 @@ public class Property {
     private User agent;
 
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<Review> reviews = new ArrayList<>();
 
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -43,6 +46,17 @@ public class Property {
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    @Transient
+    public Double getAverageRating() {
+        if (reviews == null || reviews.isEmpty()) return 0.0;
+        return reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+    }
+
+    @Transient
+    public Integer getTotalReviews() {
+        return reviews == null ? 0 : reviews.size();
+    }
 
     @PrePersist
     protected void onCreate() {

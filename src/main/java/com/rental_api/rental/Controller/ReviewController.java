@@ -9,8 +9,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
@@ -18,23 +16,15 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    @PostMapping
-    public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
+    // ================= ADD / UPDATE REVIEW =================
+    @PostMapping("/{propertyId}")
+    public ResponseEntity<ApiResponse<ReviewResponse>> addOrUpdateReview(
+            @PathVariable Long propertyId,
             @RequestBody ReviewRequest request,
             Authentication auth
     ) {
-        ReviewResponse response = reviewService.createReview(request, auth);
+        ReviewResponse res = reviewService.addOrUpdateReview(propertyId, request, auth);
         return ResponseEntity.status(201)
-                .body(ApiResponse.success(201, "Review created successfully", response));
-    }
-
-    @GetMapping("/property/{propertyId}")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsByProperty(
-            @PathVariable Long propertyId
-    ) {
-        List<ReviewResponse> responses = reviewService.getReviewsByProperty(propertyId);
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "Reviews fetched successfully", responses)
-        );
+                .body(ApiResponse.success(201, "Review added/updated successfully", res));
     }
 }
