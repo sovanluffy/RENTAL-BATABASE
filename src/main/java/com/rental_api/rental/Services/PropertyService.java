@@ -11,9 +11,9 @@ public interface PropertyService {
 
     PropertyResponse updateProperty(Long id, PropertyRequest request, Authentication auth);
 
-    // ✅ GET ALL
+    PropertyResponse getPropertyById(Long id); // <-- add this
+
     List<PropertyResponse> getAllProperties();
 
-    // ✅ DELETE
     void deleteProperty(Long id, Authentication auth);
 }

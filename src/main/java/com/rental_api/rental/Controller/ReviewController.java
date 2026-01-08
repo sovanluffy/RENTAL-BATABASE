@@ -1,9 +1,10 @@
 package com.rental_api.rental.Controller;
 
 import com.rental_api.rental.Dtos.Request.ReviewRequest;
-import com.rental_api.rental.Dtos.Response.ReviewResponse;
 import com.rental_api.rental.Dtos.Response.ApiResponse;
+import com.rental_api.rental.Dtos.Response.ReviewResponse;
 import com.rental_api.rental.Services.ReviewService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -22,12 +23,11 @@ public class ReviewController {
     // ---------------- CREATE REVIEW ----------------
     @PostMapping
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
-            @RequestBody ReviewRequest request,
+            @Valid @RequestBody ReviewRequest request,
             Authentication auth
     ) {
         ReviewResponse res = reviewService.createReview(request, auth);
-        return ResponseEntity
-                .status(201)
+        return ResponseEntity.status(201)
                 .body(ApiResponse.success(201, "Review created successfully", res));
     }
 
@@ -35,20 +35,22 @@ public class ReviewController {
     @PutMapping("/{propertyId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
             @PathVariable Long propertyId,
-            @RequestBody ReviewRequest request,
+            @Valid @RequestBody ReviewRequest request,
             Authentication auth
     ) {
         ReviewResponse res = reviewService.updateReview(propertyId, request, auth);
-        return ResponseEntity
-                .ok(ApiResponse.success(200, "Review updated successfully", res));
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "Review updated successfully", res)
+        );
     }
 
     // ---------------- GET REVIEWS BY PROPERTY ----------------
     @GetMapping("/property/{propertyId}")
-    public ResponseEntity<ApiResponse<Object>> getReviewsByProperty(@PathVariable Long propertyId) {
+    public ResponseEntity<ApiResponse<Object>> getReviewsByProperty(
+            @PathVariable Long propertyId
+    ) {
         List<ReviewResponse> reviews = reviewService.getReviewsByProperty(propertyId);
 
-        // Calculate totalReviews and avgRating
         int totalReviews = reviews.size();
         double avgRating = reviews.stream()
                 .mapToInt(ReviewResponse::getRating)
@@ -63,6 +65,18 @@ public class ReviewController {
 
         return ResponseEntity.ok(
                 ApiResponse.success(200, "Property reviews fetched successfully", response)
+        );
+    }
+
+    // ---------------- GET LOGGED-IN USER REVIEW ----------------
+    @GetMapping("/{propertyId}/user")
+    public ResponseEntity<ApiResponse<ReviewResponse>> getUserReview(
+            @PathVariable Long propertyId,
+            Authentication auth
+    ) {
+        ReviewResponse res = reviewService.getUserReview(propertyId, auth);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "User review fetched successfully", res)
         );
     }
 }

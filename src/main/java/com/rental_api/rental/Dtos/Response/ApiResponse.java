@@ -5,22 +5,20 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class ApiResponse<T> {
-
     private int status;
-    private String error;
     private String message;
     private T data;
 
-    // success
+    // Success response
     public static <T> ApiResponse<T> success(int status, String message, T data) {
-        return new ApiResponse<>(status, null, message, data);
+        return new ApiResponse<>(status, message, data);
     }
 
-    // error
-    public static <T> ApiResponse<T> error(int status, String error, String message) {
-        return new ApiResponse<>(status, error, message, null);
+    // Error response
+    public static <T> ApiResponse<T> error(int status, String message, T data) {
+        return new ApiResponse<>(status, message, data);
     }
 }

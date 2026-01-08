@@ -8,12 +8,12 @@ import java.util.List;
 
 public interface ReviewService {
 
-    // Create a new review
     ReviewResponse createReview(ReviewRequest request, Authentication auth);
 
-    // Update existing review
     ReviewResponse updateReview(Long propertyId, ReviewRequest request, Authentication auth);
 
-    // Get all reviews for a property
     List<ReviewResponse> getReviewsByProperty(Long propertyId);
+
+    // ✅ ADD THIS METHOD
+    ReviewResponse getUserReview(Long propertyId, Authentication auth);
 }

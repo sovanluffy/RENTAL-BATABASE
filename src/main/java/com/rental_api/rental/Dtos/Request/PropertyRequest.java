@@ -1,13 +1,22 @@
 package com.rental_api.rental.Dtos.Request;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.Data;
 
 @Data
 public class PropertyRequest {
+
+    @NotBlank(message = "Title is required")
     private String title;
+
     private String description;
+
+    @NotBlank(message = "Address is required")
     private String address;
-    private Integer totalReviews;
-    private Double avgRating;
-    private Double price; // ✅ Double
+
+    @NotNull(message = "Price is required")
+    @Positive(message = "Price must be greater than 0")
+    private Double price;
 }
