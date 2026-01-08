@@ -13,7 +13,7 @@ public class PropertyResponse {
     private Double price;
     private Long userId;
     private Integer totalReviews;
-private Double avgRating;
+    private Double avgRating;
     private String username;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

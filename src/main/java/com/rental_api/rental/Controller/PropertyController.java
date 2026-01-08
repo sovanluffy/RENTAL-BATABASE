@@ -9,6 +9,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/properties")
 @RequiredArgsConstructor
@@ -16,7 +18,7 @@ public class PropertyController {
 
     private final PropertyService propertyService;
 
-    // ================= CREATE PROPERTY =================
+    // ============== CREATE =================
     @PostMapping
     public ResponseEntity<ApiResponse<PropertyResponse>> createProperty(
             @RequestBody PropertyRequest request,
@@ -27,15 +29,40 @@ public class PropertyController {
                 .body(ApiResponse.success(201, "Property created successfully", res));
     }
 
-
-    // ================= UPDATE PROPERTY =================
-     @PutMapping("/{id}")
-    public ResponseEntity<PropertyResponse> updateProperty(
+    // ============== UPDATE =================
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<PropertyResponse>> updateProperty(
             @PathVariable Long id,
             @RequestBody PropertyRequest request,
             Authentication auth
     ) {
-        PropertyResponse response = propertyService.updateProperty(id, request, auth);
-        return ResponseEntity.ok(response);
+        PropertyResponse res = propertyService.updateProperty(id, request, auth);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "Property updated successfully", res)
+        );
+    }
+
+    // ============== GET ALL =================
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<PropertyResponse>>> getAllProperties() {
+        return ResponseEntity.ok(
+                ApiResponse.success(
+                        200,
+                        "Get all properties successfully",
+                        propertyService.getAllProperties()
+                )
+        );
+    }
+
+    // ============== DELETE =================
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteProperty(
+            @PathVariable Long id,
+            Authentication auth
+    ) {
+        propertyService.deleteProperty(id, auth);
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "Property deleted successfully", null)
+        );
     }
 }
