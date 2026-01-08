@@ -16,16 +16,27 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
+    // Create a new review
     @PostMapping
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
             @RequestBody ReviewRequest request,
             Authentication auth
     ) {
         ReviewResponse res = reviewService.createReview(request, auth);
-
-        // Wrap in ApiResponse
         return ResponseEntity
                 .status(201)
                 .body(ApiResponse.success(201, "Review created successfully", res));
+    }
+
+    // Update an existing review
+    @PutMapping("/{propertyId}")
+    public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
+            @PathVariable Long propertyId,
+            @RequestBody ReviewRequest request,
+            Authentication auth
+    ) {
+        ReviewResponse res = reviewService.updateReview(propertyId, request, auth);
+        return ResponseEntity
+                .ok(ApiResponse.success(200, "Review updated successfully", res));
     }
 }
