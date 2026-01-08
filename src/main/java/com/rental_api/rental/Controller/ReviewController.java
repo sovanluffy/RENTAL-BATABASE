@@ -1,15 +1,13 @@
 package com.rental_api.rental.Controller;
 
 import com.rental_api.rental.Dtos.Request.ReviewRequest;
-import com.rental_api.rental.Dtos.Response.ApiResponse;
 import com.rental_api.rental.Dtos.Response.ReviewResponse;
+import com.rental_api.rental.Dtos.Response.ApiResponse;
 import com.rental_api.rental.Services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/reviews")
@@ -23,18 +21,11 @@ public class ReviewController {
             @RequestBody ReviewRequest request,
             Authentication auth
     ) {
-        ReviewResponse response = reviewService.createReview(request, auth);
-        return ResponseEntity.status(201)
-                .body(ApiResponse.success(201, "Review created successfully", response));
-    }
+        ReviewResponse res = reviewService.createReview(request, auth);
 
-    @GetMapping("/property/{propertyId}")
-    public ResponseEntity<ApiResponse<List<ReviewResponse>>> getReviewsByProperty(
-            @PathVariable Long propertyId
-    ) {
-        List<ReviewResponse> responses = reviewService.getReviewsByProperty(propertyId);
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "Reviews fetched successfully", responses)
-        );
+        // Wrap in ApiResponse
+        return ResponseEntity
+                .status(201)
+                .body(ApiResponse.success(201, "Review created successfully", res));
     }
 }

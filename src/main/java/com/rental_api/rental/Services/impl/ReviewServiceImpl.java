@@ -2,24 +2,18 @@ package com.rental_api.rental.Services.impl;
 
 import com.rental_api.rental.Dtos.Request.ReviewRequest;
 import com.rental_api.rental.Dtos.Response.ReviewResponse;
-import com.rental_api.rental.Entity.Property;
-import com.rental_api.rental.Entity.Review;
-import com.rental_api.rental.Entity.User;
-import com.rental_api.rental.Exception.PropertyNotFoundException;
-import com.rental_api.rental.Exception.UserNotFoundException;
-import com.rental_api.rental.Repository.PropertyRepository;
-import com.rental_api.rental.Repository.ReviewRepository;
-import com.rental_api.rental.Repository.UserRepository;
+import com.rental_api.rental.Entity.*;
+import com.rental_api.rental.Exception.*;
+import com.rental_api.rental.Repository.*;
 import com.rental_api.rental.Services.ReviewService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ReviewServiceImpl implements ReviewService {
 
     private final ReviewRepository reviewRepository;
@@ -28,12 +22,26 @@ public class ReviewServiceImpl implements ReviewService {
 
     @Override
     public ReviewResponse createReview(ReviewRequest request, Authentication auth) {
+
+        //  Get logged-in user
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        //  Get property
         Property property = propertyRepository.findById(request.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException("Property not found"));
 
+        //  Validate rating
+        if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
+            throw new ValidationException("Rating must be between 1 and 5");
+        }
+
+        // Check for duplicate review
+        if (reviewRepository.existsByUserAndProperty(user, property)) {
+            throw new ConflictException("You have already reviewed this property. Reviews are final.");
+        }
+
+        // ✅ Create review
         Review review = new Review();
         review.setUser(user);
         review.setProperty(property);
@@ -42,40 +50,18 @@ public class ReviewServiceImpl implements ReviewService {
 
         reviewRepository.save(review);
 
-        ReviewResponse response = new ReviewResponse();
-        response.setId(review.getId());
-        response.setUserId(user.getId());
-        response.setUsername(user.getUsername());
-        response.setPropertyId(property.getId());
-        response.setPropertyTitle(property.getTitle());
-        response.setRating(review.getRating());
-        response.setComment(review.getComment());
-        response.setCreatedAt(review.getCreatedAt());
+        // 📊 Update property stats
+        property.updateReviewStats();
+        propertyRepository.save(property);
 
-        return response;
-    }
-
-    @Override
-    public List<ReviewResponse> getReviewsByProperty(Long propertyId) {
-        Property property = propertyRepository.findById(propertyId)
-                .orElseThrow(() -> new PropertyNotFoundException("Property not found"));
-
-        List<Review> reviews = reviewRepository.findByProperty(property);
-        List<ReviewResponse> responses = new ArrayList<>();
-
-        for (Review review : reviews) {
-            ReviewResponse dto = new ReviewResponse();
-            dto.setId(review.getId());
-            dto.setUserId(review.getUser().getId());
-            dto.setUsername(review.getUser().getUsername());
-            dto.setPropertyId(property.getId());
-            dto.setPropertyTitle(property.getTitle());
-            dto.setRating(review.getRating());
-            dto.setComment(review.getComment());
-            dto.setCreatedAt(review.getCreatedAt());
-            responses.add(dto);
-        }
-
-        return responses;
+        return new ReviewResponse(
+                review.getId(),
+                property.getId(),
+                user.getId(),
+                user.getUsername(),
+                review.getRating(),
+                review.getComment(),
+                review.getCreatedAt()
+        );
     }
 }
