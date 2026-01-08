@@ -55,7 +55,7 @@ public class ReviewServiceImpl implements ReviewService {
 
         reviewRepository.save(review);
 
-        // 📊 Update property stats
+        //  Update property stats
         property.updateReviewStats();
         propertyRepository.save(property);
 
