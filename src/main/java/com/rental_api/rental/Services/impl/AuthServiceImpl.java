@@ -7,13 +7,13 @@ import com.rental_api.rental.Dtos.Response.RegisterResponse;
 import com.rental_api.rental.Entity.Role;
 import com.rental_api.rental.Entity.User;
 import com.rental_api.rental.Entity.UserRole;
-import com.rental_api.rental.Exception.RoleNotFoundException;
-import com.rental_api.rental.Exception.UserNotFoundException;
+import com.rental_api.rental.Exception.*;
 import com.rental_api.rental.Repository.RoleRepository;
 import com.rental_api.rental.Repository.UserRepository;
 import com.rental_api.rental.Repository.UserRoleRepository;
 import com.rental_api.rental.Security.JwtUtils;
 import com.rental_api.rental.Services.AuthService;
+import com.rental_api.rental.Utils.Validation;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,10 +34,14 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtils jwtUtils;
 
+    // ================= REGISTER =================
     @Override
     public RegisterResponse register(RegisterRequest request) {
-        if(userRepository.existsByUsernameOrEmail(request.getUsername(), request.getEmail()))
-            throw new RuntimeException("User already exists");
+        Validation.validateRegister(request);
+
+        if (userRepository.existsByUsernameOrEmail(request.getUsername(), request.getEmail())) {
+            throw new ConflictException("Username or email already exists");
+        }
 
         User user = new User();
         user.setUsername(request.getUsername());
@@ -49,45 +53,44 @@ public class AuthServiceImpl implements AuthService {
         user.setRoles(new ArrayList<>());
         userRepository.save(user);
 
-        // Always assign USER role
         Role userRole = roleRepository.findByName("USER")
                 .orElseThrow(() -> new RoleNotFoundException("USER role not found"));
         assignRole(user, userRole);
 
-        // Assign extra roles if provided
-        if(request.getRoleIds() != null) {
-            for(Long roleId : request.getRoleIds()) {
-                Role extraRole = roleRepository.findById(roleId)
-                        .orElseThrow(() -> new RoleNotFoundException("Role not found"));
-                if(!extraRole.getName().equalsIgnoreCase("USER"))
-                    assignRole(user, extraRole);
-            }
+        if (request.isAgent()) {
+            Role agentRole = roleRepository.findByName("AGENT")
+                    .orElseThrow(() -> new RoleNotFoundException("AGENT role not found"));
+            assignRole(user, agentRole);
         }
 
-        List<String> roleNames = user.getRoles().stream()
+        List<String> roles = user.getRoles().stream()
                 .map(UserRole::getRole)
                 .map(Role::getName)
                 .collect(Collectors.toList());
 
-        RegisterResponse res = new RegisterResponse();
-        res.setId(user.getId());
-        res.setUsername(user.getUsername());
-        res.setEmail(user.getEmail());
-        res.setFirstName(user.getFirstName());
-        res.setLastName(user.getLastName());
-        res.setPhone(user.getPhone());
-        res.setRoles(String.join(", ", roleNames));
-        res.setMessage("Registered successfully");
-        return res;
+        return new RegisterResponse(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                user.getPhone(),
+                roles
+        );
     }
 
+    // ================= LOGIN =================
     @Override
     public LoginResponse login(LoginRequest request) {
-        User user = findUserByUsernameOrEmail(request);
-        if(!passwordEncoder.matches(request.getPassword(), user.getPassword()))
-            throw new RuntimeException("Invalid password");
+        Validation.validateLogin(request);
+        User user = findUser(request);
 
-        List<String> roleNames = user.getRoles().stream()
+        if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
+            throw new UnauthorizedException("Invalid username/email or password");
+        }
+
+        // Get roles & IDs
+        List<String> roles = user.getRoles().stream()
                 .map(UserRole::getRole)
                 .map(Role::getName)
                 .collect(Collectors.toList());
@@ -97,36 +100,44 @@ public class AuthServiceImpl implements AuthService {
                 .map(Role::getId)
                 .collect(Collectors.toList());
 
-        String token = jwtUtils.generateToken(user.getId(), user.getUsername(), user.getEmail(), roleNames, roleIds);
+        // Generate token including roles & roleIds
+        String token = jwtUtils.generateToken(
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                roles,
+                roleIds
+        );
 
         return new LoginResponse(
-            token, 
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getFirstName(), 
-            user.getLastName(), 
-            roleNames);
+                token,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getFirstName(),
+                user.getLastName(),
+                roles
+        );
     }
 
-    // ---------------- Helper Methods ----------------
-
-    private void assignRole(User user, Role role) {
-        if(user.getRoles() == null) user.setRoles(new ArrayList<>());
-        UserRole ur = new UserRole();
-        ur.setUser(user);
-        ur.setRole(role);
-        user.getRoles().add(ur);
-        userRoleRepository.save(ur);
-    }
-
-    private User findUserByUsernameOrEmail(LoginRequest request) {
-        if(request.getUsername() != null && !request.getUsername().isBlank())
+    // ================= HELPER METHODS =================
+    private User findUser(LoginRequest request) {
+        if (request.getUsername() != null && !request.getUsername().isBlank()) {
             return userRepository.findByUsername(request.getUsername())
                     .orElseThrow(() -> new UserNotFoundException("User not found"));
-        if(request.getEmail() != null && !request.getEmail().isBlank())
+        }
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
             return userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new UserNotFoundException("User not found"));
-        throw new RuntimeException("Username or Email is required");
+        }
+        throw new BadRequestException("Username or email must be provided");
+    }
+
+    private void assignRole(User user, Role role) {
+        UserRole userRole = new UserRole();
+        userRole.setUser(user);
+        userRole.setRole(role);
+        user.getRoles().add(userRole);
+        userRoleRepository.save(userRole);
     }
 }

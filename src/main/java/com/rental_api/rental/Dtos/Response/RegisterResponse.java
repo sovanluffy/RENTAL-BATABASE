@@ -1,8 +1,16 @@
 package com.rental_api.rental.Dtos.Response;
 
-import lombok.Data;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
-@Data
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class RegisterResponse {
     private Long id;
     private String username;
@@ -10,6 +18,5 @@ public class RegisterResponse {
     private String firstName;
     private String lastName;
     private String phone;
-    private String roles; // Comma-separated
-    private String message;
+    private List<String> roles;
 }
