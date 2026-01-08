@@ -24,9 +24,11 @@ public class PropertyServiceImpl implements PropertyService {
     @Override
     public PropertyResponse createProperty(PropertyRequest request, Authentication auth) {
 
+        // Get logged-in user
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
+        // Check ROLE
         boolean allowed = auth.getAuthorities().stream()
                 .anyMatch(a ->
                         a.getAuthority().equals("ROLE_AGENT") ||
@@ -37,6 +39,7 @@ public class PropertyServiceImpl implements PropertyService {
             throw new UnauthorizedException("Only AGENT or ADMIN can create properties");
         }
 
+        // Create Property entity
         Property property = new Property();
         property.setTitle(request.getTitle());
         property.setDescription(request.getDescription());
@@ -44,8 +47,12 @@ public class PropertyServiceImpl implements PropertyService {
         property.setPrice(request.getPrice());
         property.setAgent(user);
 
+        // Initialize reviews stats
+        property.updateReviewStats(); // totalReviews = 0, avgRating = 0.0
+
         propertyRepository.save(property);
 
+        // Map to Response DTO
         PropertyResponse response = new PropertyResponse();
         response.setId(property.getId());
         response.setTitle(property.getTitle());
@@ -56,6 +63,10 @@ public class PropertyServiceImpl implements PropertyService {
         response.setUsername(user.getUsername());
         response.setCreatedAt(property.getCreatedAt());
         response.setUpdatedAt(property.getUpdatedAt());
+
+        // Include new fields
+        response.setTotalReviews(property.getTotalReviews());
+        response.setAvgRating(property.getAvgRating());
 
         return response;
     }

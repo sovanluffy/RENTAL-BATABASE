@@ -38,6 +38,12 @@ public class Property {
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
+    @Column(name = "total_reviews")
+    private Integer totalReviews = 0;
+
+    @Column(name = "avg_rating")
+    private Double avgRating = 0.0;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -48,10 +54,28 @@ public class Property {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        updateReviewStats();
     }
 
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+        updateReviewStats();
+    }
+
+    /**
+     * Updates totalReviews and avgRating based on current reviews list
+     */
+    public void updateReviewStats() {
+        if (reviews == null || reviews.isEmpty()) {
+            totalReviews = 0;
+            avgRating = 0.0;
+        } else {
+            totalReviews = reviews.size();
+            avgRating = reviews.stream()
+                               .mapToDouble(Review::getRating)
+                               .average()
+                               .orElse(0.0);
+        }
     }
 }
