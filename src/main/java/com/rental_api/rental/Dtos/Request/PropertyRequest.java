@@ -8,6 +8,6 @@ public class PropertyRequest {
     private String description;
     private String address;
     private Integer totalReviews;
-private Double avgRating;
+    private Double avgRating;
     private Double price; // ✅ Double
 }
