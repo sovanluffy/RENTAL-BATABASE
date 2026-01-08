@@ -9,6 +9,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/reviews")
 @RequiredArgsConstructor
@@ -16,7 +19,7 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // Create a new review
+    // ---------------- CREATE REVIEW ----------------
     @PostMapping
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
             @RequestBody ReviewRequest request,
@@ -28,7 +31,7 @@ public class ReviewController {
                 .body(ApiResponse.success(201, "Review created successfully", res));
     }
 
-    // Update an existing review
+    // ---------------- UPDATE REVIEW ----------------
     @PutMapping("/{propertyId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
             @PathVariable Long propertyId,
@@ -38,5 +41,28 @@ public class ReviewController {
         ReviewResponse res = reviewService.updateReview(propertyId, request, auth);
         return ResponseEntity
                 .ok(ApiResponse.success(200, "Review updated successfully", res));
+    }
+
+    // ---------------- GET REVIEWS BY PROPERTY ----------------
+    @GetMapping("/property/{propertyId}")
+    public ResponseEntity<ApiResponse<Object>> getReviewsByProperty(@PathVariable Long propertyId) {
+        List<ReviewResponse> reviews = reviewService.getReviewsByProperty(propertyId);
+
+        // Calculate totalReviews and avgRating
+        int totalReviews = reviews.size();
+        double avgRating = reviews.stream()
+                .mapToInt(ReviewResponse::getRating)
+                .average()
+                .orElse(0.0);
+
+        Map<String, Object> response = Map.of(
+                "totalReviews", totalReviews,
+                "avgRating", avgRating,
+                "reviews", reviews
+        );
+
+        return ResponseEntity.ok(
+                ApiResponse.success(200, "Property reviews fetched successfully", response)
+        );
     }
 }
