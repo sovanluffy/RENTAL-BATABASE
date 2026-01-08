@@ -15,6 +15,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -24,29 +26,23 @@ public class ReviewServiceImpl implements ReviewService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
 
-    // ===================== CREATE REVIEW =====================
+    // ================= CREATE REVIEW =================
     @Override
     public ReviewResponse createReview(ReviewRequest request, Authentication auth) {
-
-        // 🔐 Get logged-in user
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // 🏠 Get property
         Property property = propertyRepository.findById(request.getPropertyId())
                 .orElseThrow(() -> new PropertyNotFoundException("Property not found"));
 
-        // ⭐ Validate rating
         if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
             throw new ValidationException("Rating must be between 1 and 5");
         }
 
-        // ❌ Check duplicate
         if (reviewRepository.existsByUserAndProperty(user, property)) {
             throw new ConflictException("You have already reviewed this property. Use update to change it.");
         }
 
-        // ✅ Create review
         Review review = new Review();
         review.setUser(user);
         review.setProperty(property);
@@ -55,7 +51,6 @@ public class ReviewServiceImpl implements ReviewService {
 
         reviewRepository.save(review);
 
-        //  Update property stats
         property.updateReviewStats();
         propertyRepository.save(property);
 
@@ -70,34 +65,27 @@ public class ReviewServiceImpl implements ReviewService {
         );
     }
 
-    // ===================== UPDATE REVIEW =====================
+    // ================= UPDATE REVIEW =================
     @Override
     public ReviewResponse updateReview(Long propertyId, ReviewRequest request, Authentication auth) {
-
-        // 🔐 Get logged-in user
         User user = userRepository.findByUsername(auth.getName())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
-        // 🏠 Get property
         Property property = propertyRepository.findById(propertyId)
                 .orElseThrow(() -> new PropertyNotFoundException("Property not found"));
 
-        // ⭐ Validate rating
         if (request.getRating() == null || request.getRating() < 1 || request.getRating() > 5) {
             throw new ValidationException("Rating must be between 1 and 5");
         }
 
-        // ❌ Get existing review
         Review review = reviewRepository.findByUserAndProperty(user, property)
                 .orElseThrow(() -> new ConflictException("You have not reviewed this property yet."));
 
-        // ✅ Update fields
         review.setRating(request.getRating());
         review.setComment(request.getComment());
 
         reviewRepository.save(review);
 
-        // 📊 Update property stats
         property.updateReviewStats();
         propertyRepository.save(property);
 
@@ -110,5 +98,25 @@ public class ReviewServiceImpl implements ReviewService {
                 review.getComment(),
                 review.getCreatedAt()
         );
+    }
+
+    // ================= GET REVIEWS BY PROPERTY =================
+    @Override
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> getReviewsByProperty(Long propertyId) {
+        Property property = propertyRepository.findById(propertyId)
+                .orElseThrow(() -> new PropertyNotFoundException("Property not found"));
+
+        return property.getReviews().stream()
+                .map(review -> new ReviewResponse(
+                        review.getId(),
+                        property.getId(),
+                        review.getUser().getId(),
+                        review.getUser().getUsername(),
+                        review.getRating(),
+                        review.getComment(),
+                        review.getCreatedAt()
+                ))
+                .toList();
     }
 }
