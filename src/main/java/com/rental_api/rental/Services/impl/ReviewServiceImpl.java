@@ -26,7 +26,7 @@ public class ReviewServiceImpl implements ReviewService {
     private final PropertyRepository propertyRepository;
     private final UserRepository userRepository;
 
-    // ================= CREATE REVIEW =================
+    // ================= CREATE REVIE =================
     @Override
     public ReviewResponse createReview(ReviewRequest request, Authentication auth) {
         User user = userRepository.findByUsername(auth.getName())
