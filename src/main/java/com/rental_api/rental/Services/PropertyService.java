@@ -6,4 +6,6 @@ import com.rental_api.rental.Dtos.Response.PropertyResponse;
 
 public interface PropertyService {
     PropertyResponse createProperty(PropertyRequest request, Authentication auth);
+    PropertyResponse updateProperty(Long id, PropertyRequest request, Authentication auth);
+
 }
