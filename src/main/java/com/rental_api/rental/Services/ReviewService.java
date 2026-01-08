@@ -5,7 +5,9 @@ import com.rental_api.rental.Dtos.Response.ReviewResponse;
 import org.springframework.security.core.Authentication;
 
 public interface ReviewService {
-    ReviewResponse createReview(ReviewRequest request, Authentication auth);
-        ReviewResponse updateReview(Long propertyId, ReviewRequest request, Authentication auth);
 
+    ReviewResponse createReview(ReviewRequest request, Authentication auth);
+
+    // Make sure this method is exactly like this
+    ReviewResponse updateReview(Long propertyId, ReviewRequest request, Authentication auth);
 }
