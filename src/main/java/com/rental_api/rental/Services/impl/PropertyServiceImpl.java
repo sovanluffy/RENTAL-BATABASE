@@ -92,7 +92,6 @@ public class PropertyServiceImpl implements PropertyService {
     response.setUsername(property.getAgent().getUsername());
     response.setCreatedAt(property.getCreatedAt());
     response.setUpdatedAt(property.getUpdatedAt());
-
     return response;
 }
 
