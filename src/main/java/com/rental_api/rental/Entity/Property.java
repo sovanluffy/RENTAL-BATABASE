@@ -2,6 +2,7 @@ package com.rental_api.rental.Entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,10 +32,21 @@ public class Property {
     @Column(nullable = false)
     private Double price;
 
+    // ================= AGENT =================
     @ManyToOne
     @JoinColumn(name = "agent_id", nullable = false)
     private User agent;
 
+    // ================= IMAGES =================
+    @ElementCollection
+    @CollectionTable(
+        name = "property_images",
+        joinColumns = @JoinColumn(name = "property_id")
+    )
+    @Column(name = "image_url", nullable = false)
+    private List<String> images = new ArrayList<>();
+
+    // ================= REVIEWS =================
     @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Review> reviews = new ArrayList<>();
 
@@ -44,6 +56,7 @@ public class Property {
     @Column(name = "avg_rating")
     private Double avgRating = 0.0;
 
+    // ================= AUDIT =================
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -51,7 +64,7 @@ public class Property {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void reach() {
+    protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         updateReviewStats();
@@ -63,9 +76,7 @@ public class Property {
         updateReviewStats();
     }
 
-    /**
-     * Updates totalReviews and avgRating based on current reviews list
-     */
+    // ================= REVIEW STATS =================
     public void updateReviewStats() {
         if (reviews == null || reviews.isEmpty()) {
             totalReviews = 0;
@@ -73,9 +84,9 @@ public class Property {
         } else {
             totalReviews = reviews.size();
             avgRating = reviews.stream()
-                               .mapToDouble(Review::getRating)
-                               .average()
-                               .orElse(0.0);
+                    .mapToDouble(Review::getRating)
+                    .average()
+                    .orElse(0.0);
         }
     }
 }
