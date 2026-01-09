@@ -4,16 +4,22 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.core.context.SecurityContextHolder;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
+
+    private final JwtUtils jwtUtils;
 
     @Override
     protected void doFilterInternal(
@@ -22,16 +28,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        // Here you can extract JWT from header and validate it
-        String jwt = request.getHeader("Authorization");
+        String header = request.getHeader("Authorization");
 
-        if (jwt != null && jwt.startsWith("Bearer ")) {
-            jwt = jwt.substring(7);
-            // TODO: validate JWT and set authentication
-            UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(null, null, null);
-            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authentication);
+        if (header != null && header.startsWith("Bearer ")) {
+            String token = header.substring(7);
+
+            try {
+                if (jwtUtils.validateToken(token)) {
+
+                    String username = jwtUtils.extractUsername(token);
+                    List<String> roles = jwtUtils.extractRoles(token);
+
+                    List<SimpleGrantedAuthority> authorities = roles.stream()
+                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                            .toList();
+
+                    UsernamePasswordAuthenticationToken authentication =
+                            new UsernamePasswordAuthenticationToken(
+                                    username,
+                                    null,
+                                    authorities
+                            );
+
+                    authentication.setDetails(
+                            new WebAuthenticationDetailsSource().buildDetails(request)
+                    );
+
+                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                }
+            } catch (Exception e) {
+                SecurityContextHolder.clearContext();
+            }
         }
 
         filterChain.doFilter(request, response);
