@@ -51,7 +51,7 @@ public class Property {
     private LocalDateTime updatedAt;
 
     @PrePersist
-    protected void onCreate() {
+    protected void reach() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
         updateReviewStats();
