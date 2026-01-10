@@ -29,15 +29,12 @@ public class PropertyServiceImpl implements PropertyService {
     // ================= CREATE =================
     @Override
     public PropertyResponse createProperty(PropertyRequest request, Authentication auth) {
-        User user = userRepository.findByUsername(auth.getName())
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        User user = (User) auth.getPrincipal();
 
-        // Only AGENT or ADMIN
         boolean allowed = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
         if (!allowed) throw new UnauthorizedException("Only AGENT or ADMIN can create properties");
 
-        // Validate images
         validateImages(request.getImages());
 
         Property property = new Property();
@@ -58,11 +55,13 @@ public class PropertyServiceImpl implements PropertyService {
         Property property = propertyRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Property not found"));
 
+        User user = (User) auth.getPrincipal();
         boolean allowed = auth.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_AGENT") || a.getAuthority().equals("ROLE_ADMIN"));
-        if (!allowed) throw new UnauthorizedException("Only AGENT or ADMIN can update property");
+        if (!allowed || (!property.getAgent().getId().equals(user.getId()) && !auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")))) {
+            throw new UnauthorizedException("Only AGENT (owner) or ADMIN can update property");
+        }
 
-        // Validate images
         validateImages(request.getImages());
 
         property.setTitle(request.getTitle());
@@ -73,6 +72,20 @@ public class PropertyServiceImpl implements PropertyService {
 
         propertyRepository.save(property);
         return mapToResponse(property);
+    }
+
+    // ================= DELETE =================
+    @Override
+    public void deleteProperty(Long id, Authentication auth) {
+        Property property = propertyRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Property not found"));
+
+        User user = (User) auth.getPrincipal();
+        boolean allowed = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || (a.getAuthority().equals("ROLE_AGENT") && property.getAgent().getId().equals(user.getId())));
+        if (!allowed) throw new UnauthorizedException("Only ADMIN or AGENT (owner) can delete property");
+
+        propertyRepository.delete(property);
     }
 
     // ================= GET SINGLE =================
@@ -86,32 +99,17 @@ public class PropertyServiceImpl implements PropertyService {
     // ================= GET ALL =================
     @Override
     public List<PropertyResponse> getAllProperties() {
-        return propertyRepository.findAll()
-                .stream()
+        return propertyRepository.findAll().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
 
-    // ================= DELETE =================
-    @Override
-    public void deleteProperty(Long id, Authentication auth) {
-        Property property = propertyRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Property not found"));
-
-        boolean allowed = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN") || a.getAuthority().equals("ROLE_AGENT"));
-        if (!allowed) throw new UnauthorizedException("Only ADMIN or AGENT can delete property");
-
-        propertyRepository.delete(property);
-    }
-
     // ================= IMAGE VALIDATION =================
     private void validateImages(List<String> images) {
-        if (images == null) return; // No images → ok
-
+        if (images == null) return;
         for (String img : images) {
             try {
-                new URL(img); // Throws if not valid URL
+                new URL(img);
             } catch (MalformedURLException e) {
                 throw new ValidationException("Invalid image URL: " + img);
             }

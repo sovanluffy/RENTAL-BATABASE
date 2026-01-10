@@ -1,5 +1,7 @@
 package com.rental_api.rental.Security;
 
+import com.rental_api.rental.Entity.User;
+import com.rental_api.rental.Repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,13 +22,13 @@ import java.util.List;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtUtils jwtUtils;
+    private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain
-    ) throws ServletException, IOException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
 
@@ -36,25 +38,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (jwtUtils.validateToken(token)) {
 
-                    String username = jwtUtils.extractUsername(token);
+                    Long userId = jwtUtils.extractUserId(token); // ✅ userId from JWT
                     List<String> roles = jwtUtils.extractRoles(token);
 
+                    // Convert to Spring authorities with ROLE_ prefix
                     List<SimpleGrantedAuthority> authorities = roles.stream()
-                            .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
                             .toList();
 
+                    // Load User entity
+                    User user = userRepository.findById(userId)
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+
+                    // Set authentication
                     UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    username,
-                                    null,
-                                    authorities
-                            );
-
-                    authentication.setDetails(
-                            new WebAuthenticationDetailsSource().buildDetails(request)
-                    );
-
+                            new UsernamePasswordAuthenticationToken(user, null, authorities);
+                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+
+                    System.out.println("Authenticated user: " + user.getUsername() + " with roles " + authorities);
                 }
             } catch (Exception e) {
                 SecurityContextHolder.clearContext();

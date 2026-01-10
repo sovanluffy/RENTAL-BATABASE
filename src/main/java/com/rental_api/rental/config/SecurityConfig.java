@@ -19,41 +19,30 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-
         http
-            // Disable CSRF for REST API
             .csrf(csrf -> csrf.disable())
-
-            // Authorization rules
             .authorizeHttpRequests(auth -> auth
-
-                // 🔓 Public authentication endpoints
+                // Public endpoints
                 .requestMatchers("/api/auth/**", "/register").permitAll()
-
-                // 🔓 Public property READ (NO TOKEN)
                 .requestMatchers(HttpMethod.GET, "/api/properties/**").permitAll()
-
-                // 🔐 Property WRITE (AGENT / ADMIN only)
-                .requestMatchers(HttpMethod.POST, "/api/properties/**")
-                    .hasAnyRole("AGENT", "ADMIN")
-
-                .requestMatchers(HttpMethod.PUT, "/api/properties/**")
-                    .hasAnyRole("AGENT", "ADMIN")
-
-                .requestMatchers(HttpMethod.DELETE, "/api/properties/**")
-                    .hasAnyRole("AGENT", "ADMIN")
-
-                // 🔐 Everything else requires authentication
+                
+                // Property write operations (AGENT / ADMIN only)
+                .requestMatchers(HttpMethod.POST, "/api/properties/**").hasAnyRole("AGENT", "ADMIN")
+                .requestMatchers(HttpMethod.PUT, "/api/properties/**").hasAnyRole("AGENT", "ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/properties/**").hasAnyRole("AGENT", "ADMIN")
+                
+                // Reviews (any authenticated user can POST/PUT)
+                .requestMatchers(HttpMethod.POST, "/api/reviews/**").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/api/reviews/**").authenticated()
+                
+                // Everything else requires authentication
                 .anyRequest().authenticated()
             )
-
-            // JWT filter
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
 
-    // Password encoder
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -15,24 +15,25 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class DataLoader {
 
     @Bean
-    CommandLineRunner addDefaultUser(
+    CommandLineRunner addDefaultRolesAndUsers(
             UserRepository userRepository,
             RoleRepository roleRepository,
             UserRoleRepository userRoleRepository,
             PasswordEncoder passwordEncoder
     ) {
         return args -> {
-            // Ensure USER role exists
+            // --- Ensure roles exist ---
             Role userRole = roleRepository.findByName("USER")
-                    .orElseGet(() -> {
-                        Role role = new Role();
-                        role.setName("USER");
-                        return roleRepository.save(role);
-                    });
+                    .orElseGet(() -> roleRepository.save(new Role(null, "USER")));
 
-            // Check if default user exists by username or email
+            Role adminRole = roleRepository.findByName("ADMIN")
+                    .orElseGet(() -> roleRepository.save(new Role(null, "ADMIN")));
+
+            Role agentRole = roleRepository.findByName("AGENT")
+                    .orElseGet(() -> roleRepository.save(new Role(null, "AGENT")));
+
+            // --- Default USER ---
             if (userRepository.findByUsernameOrEmail("reach", "reach@example.com").isEmpty()) {
-                // Create default user
                 User reachUser = new User();
                 reachUser.setUsername("reach");
                 reachUser.setEmail("reach@example.com");
@@ -41,13 +42,45 @@ public class DataLoader {
                 reachUser.setPassword(passwordEncoder.encode("password123"));
                 userRepository.save(reachUser);
 
-                // Assign USER role to the user
                 UserRole ur = new UserRole();
                 ur.setUser(reachUser);
                 ur.setRole(userRole);
                 userRoleRepository.save(ur);
+                System.out.println("Default USER created: reach / password123");
+            }
 
-                System.out.println("Default user created: reach / password123 with role USER");
+            // --- Default ADMIN ---
+            if (userRepository.findByUsernameOrEmail("admin", "admin@example.com").isEmpty()) {
+                User adminUser = new User();
+                adminUser.setUsername("admin");
+                adminUser.setEmail("admin@example.com");
+                adminUser.setFirstName("Admin");
+                adminUser.setLastName("User");
+                adminUser.setPassword(passwordEncoder.encode("admin123"));
+                userRepository.save(adminUser);
+
+                UserRole ur = new UserRole();
+                ur.setUser(adminUser);
+                ur.setRole(adminRole);
+                userRoleRepository.save(ur);
+                System.out.println("Default ADMIN created: admin / admin123");
+            }
+
+            // --- Default AGENT ---
+            if (userRepository.findByUsernameOrEmail("agent", "agent@example.com").isEmpty()) {
+                User agentUser = new User();
+                agentUser.setUsername("agent");
+                agentUser.setEmail("agent@example.com");
+                agentUser.setFirstName("Agent");
+                agentUser.setLastName("User");
+                agentUser.setPassword(passwordEncoder.encode("agent123"));
+                userRepository.save(agentUser);
+
+                UserRole ur = new UserRole();
+                ur.setUser(agentUser);
+                ur.setRole(agentRole);
+                userRoleRepository.save(ur);
+                System.out.println("Default AGENT created: agent / agent123");
             }
         };
     }

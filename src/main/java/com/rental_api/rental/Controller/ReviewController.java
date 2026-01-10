@@ -20,18 +20,17 @@ public class ReviewController {
 
     private final ReviewService reviewService;
 
-    // ---------------- CREATE REVIEW ----------------
-    @PostMapping
+    @PostMapping("/{propertyId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> createReview(
+            @PathVariable Long propertyId,
             @Valid @RequestBody ReviewRequest request,
             Authentication auth
     ) {
-        ReviewResponse res = reviewService.createReview(request, auth);
+        ReviewResponse res = reviewService.createReview(propertyId, request, auth);
         return ResponseEntity.status(201)
                 .body(ApiResponse.success(201, "Review created successfully", res));
     }
 
-    // ---------------- UPDATE REVIEW ----------------
     @PutMapping("/{propertyId}")
     public ResponseEntity<ApiResponse<ReviewResponse>> updateReview(
             @PathVariable Long propertyId,
@@ -44,18 +43,11 @@ public class ReviewController {
         );
     }
 
-    // ---------------- GET REVIEWS BY PROPERTY ----------------
     @GetMapping("/property/{propertyId}")
-    public ResponseEntity<ApiResponse<Object>> getReviewsByProperty(
-            @PathVariable Long propertyId
-    ) {
+    public ResponseEntity<ApiResponse<Object>> getReviewsByProperty(@PathVariable Long propertyId) {
         List<ReviewResponse> reviews = reviewService.getReviewsByProperty(propertyId);
-
         int totalReviews = reviews.size();
-        double avgRating = reviews.stream()
-                .mapToInt(ReviewResponse::getRating)
-                .average()
-                .orElse(0.0);
+        double avgRating = reviews.stream().mapToInt(ReviewResponse::getRating).average().orElse(0.0);
 
         Map<String, Object> response = Map.of(
                 "totalReviews", totalReviews,
@@ -63,20 +55,15 @@ public class ReviewController {
                 "reviews", reviews
         );
 
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "Property reviews fetched successfully", response)
-        );
+        return ResponseEntity.ok(ApiResponse.success(200, "Property reviews fetched successfully", response));
     }
 
-    // ---------------- GET LOGGED-IN USER REVIEW ----------------
     @GetMapping("/{propertyId}/user")
     public ResponseEntity<ApiResponse<ReviewResponse>> getUserReview(
             @PathVariable Long propertyId,
             Authentication auth
     ) {
         ReviewResponse res = reviewService.getUserReview(propertyId, auth);
-        return ResponseEntity.ok(
-                ApiResponse.success(200, "User review fetched successfully", res)
-        );
+        return ResponseEntity.ok(ApiResponse.success(200, "User review fetched successfully", res));
     }
 }
